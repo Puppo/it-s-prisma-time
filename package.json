@@ -1,0 +1,24 @@
+{
+  "name": "it-s-prisma-time",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:Puppo/it-s-prisma-time.git",
+  "author": "Luca Del Puppo <luca@delpuppo.net>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "ts-node ./src/index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.12",
+    "prisma-erd-generator": "^0.6.1",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.2"
+  },
+  "engines": {
+    "node": ">=12.2.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^3.6.0",
+    "prisma": "^3.6.0"
+  }
+}
