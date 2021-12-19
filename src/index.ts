@@ -1,51 +1,55 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 async function main() {
   const prisma = new PrismaClient();
   try {
-    console.log("START --> Simple Insert");
-
-    const newAuthor = await prisma.author.create({
-      data: {
-        firstName: "John",
-        lastName: "Doe",
-      },
-    });
-    console.log({ newAuthor });
-
-    console.log("END --> Simple Insert");
-
-    console.log("START --> Advance Insert");
-
-    const newPost = await prisma.post.create({
-      data: {
-        title: "First Post",
-        content: "This is the first post",
-        published: false,
-        comments: {
-          create: {
-            text: "First comment",
-            author: {
-              connectOrCreate: {
-                create: {
-                  lastName: "Last name connectOrCreate ",
-                  firstName: "First name connectOrCreate",
-                },
-                where: {
-                  id: newAuthor.id,
-                },
-              },
+    console.log("START --> Insert");
+    const authors = await Promise.all(
+      [1, 2, 3].map(
+        async i =>
+          await prisma.author.create({
+            data: {
+              firstName: `First name ${i}`,
+              lastName: `Last name ${i}`,
             },
-          },
+          })
+      )
+    );
+    console.log({ authors });
+    console.log("END --> Insert");
+
+    console.log("START --> Delete Single");
+
+    try {
+      const deletedAuthor = await prisma.author.delete({
+        where: {
+          id: 1,
+        },
+      });
+      console.log({ deletedAuthor });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        console.log("Author not found");
+      } else console.error(error);
+    }
+
+    console.log("END --> Delete Single");
+
+    console.log("START --> Delete Many");
+
+    const deletedAuthorsResult = await prisma.author.deleteMany({
+      where: {
+        id: {
+          in: authors.map(a => a.id),
         },
       },
-      include: {
-        comments: true,
-      },
     });
-    console.log("newPost", JSON.stringify(newPost, null, 4));
+    console.log({ deletedAuthorsResult });
 
-    console.log("END --> Advance Insert");
+    console.log("END --> Delete Many");
   } catch (error) {
     console.error(error);
     throw error;
