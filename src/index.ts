@@ -18,15 +18,18 @@ async function main() {
     console.log({ authors });
     console.log("END --> Insert");
 
-    console.log("START --> Delete Single");
+    console.log("START --> Update Single");
 
     try {
-      const deletedAuthor = await prisma.author.delete({
+      const updatedAuthor = await prisma.author.update({
+        data: {
+          posts: {},
+        },
         where: {
-          id: 1,
+          id: authors[0].id,
         },
       });
-      console.log({ deletedAuthor });
+      console.log({ updatedAuthor });
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -36,20 +39,7 @@ async function main() {
       } else console.error(error);
     }
 
-    console.log("END --> Delete Single");
-
-    console.log("START --> Delete Many");
-
-    const deletedAuthorsResult = await prisma.author.deleteMany({
-      where: {
-        id: {
-          in: authors.map(a => a.id),
-        },
-      },
-    });
-    console.log({ deletedAuthorsResult });
-
-    console.log("END --> Delete Many");
+    console.log("END --> Update Single");
   } catch (error) {
     console.error(error);
     throw error;
