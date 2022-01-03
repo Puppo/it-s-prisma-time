@@ -43,90 +43,46 @@ async function main() {
   try {
     await setup(prisma);
     {
-      // SELECT * FROM post
-      const posts = await prisma.post.findMany();
-      console.log(`Select: `, JSON.stringify(posts, undefined, 2));
-    }
-
-    {
-      // SELECT * FROM post WHERE id >= 5
-      const posts = await prisma.post.findMany({
-        where: {
-          id: {
-            gte: 5,
-          },
-        },
-      });
-      console.log(`Where: `, JSON.stringify(posts, undefined, 2));
-    }
-
-    {
-      // SELECT * FROM post ORDER BY published DESC
-      const posts = await prisma.post.findMany({
+      // skip, take
+      const pageOnePosts = await prisma.post.findMany({
+        take: 3,
         orderBy: {
-          published: "desc",
+          id: "asc",
         },
       });
-      console.log(
-        `OrderBy Single Column: `,
-        JSON.stringify(posts, undefined, 2)
-      );
+      console.log(`Page 1: `, JSON.stringify(pageOnePosts, undefined, 2));
+
+      const pageTwoPosts = await prisma.post.findMany({
+        skip: 3,
+        take: 3,
+        orderBy: {
+          id: "asc",
+        },
+      });
+      console.log(`Page 2: `, JSON.stringify(pageTwoPosts, undefined, 2));
     }
 
     {
-      // SELECT * FROM post ORDER BY published DESC, createAt ASC
-      const posts = await prisma.post.findMany({
-        orderBy: [{ published: "desc" }, { createAt: "asc" }],
-      });
-      console.log(
-        `OrderBy Multiple Columns: `,
-        JSON.stringify(posts, undefined, 2)
-      );
-    }
-
-    {
-      // SELECT id, title, content FROM post
-      const posts = await prisma.post.findMany({
-        select: {
-          id: true,
-          title: true,
-          content: true,
+      // cursor
+      const pageOnePosts = await prisma.post.findMany({
+        take: 3,
+        orderBy: {
+          id: "asc",
         },
       });
-      console.log(`Select Columns: `, JSON.stringify(posts, undefined, 2));
-    }
+      console.log(`Page 1: `, JSON.stringify(pageOnePosts, undefined, 2));
 
-    {
-      // Include
-      const posts = await prisma.post.findMany({
-        include: {
-          authors: {
-            select: {
-              author: true,
-            },
-          },
-          comments: true,
+      const pageTwoPosts = await prisma.post.findMany({
+        skip: 1,
+        take: 3,
+        cursor: {
+          id: pageOnePosts[pageOnePosts.length - 1].id,
+        },
+        orderBy: {
+          id: "asc",
         },
       });
-      console.log(`Include: `, JSON.stringify(posts, undefined, 2));
-    }
-
-    {
-      const post = await prisma.post.findFirst({
-        where: {
-          published: true,
-        },
-      });
-      console.log(`findFirst: `, JSON.stringify(post, undefined, 2));
-    }
-
-    {
-      const post = await prisma.post.findUnique({
-        where: {
-          id: 1,
-        },
-      });
-      console.log(`findUnique: `, JSON.stringify(post, undefined, 2));
+      console.log(`Page 2: `, JSON.stringify(pageTwoPosts, undefined, 2));
     }
   } catch (error) {
     console.error(error);
