@@ -17,8 +17,8 @@ async function setup(prisma: PrismaClient): Promise<void> {
       async i =>
         await prisma.author.create({
           data: {
-            firstName: `First name ${i + 1}`,
-            lastName: `Last name ${i + 1}`,
+            givenName: `First name ${i + 1}`,
+            familyName: `Last name ${i + 1}`,
             age: getRandomInt(16, 100),
           },
         })

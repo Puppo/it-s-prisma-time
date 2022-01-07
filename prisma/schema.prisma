@@ -41,12 +41,12 @@ model Comment {
 }
 
 model Author {
-  id        Int @id @default(autoincrement())
-  firstName String
-  lastName  String
-  age       Int
-  comments  Comment[]
-  posts     AuthorsOnPost[]
+  id          Int @id @default(autoincrement())
+  givenName   String
+  familyName  String
+  age         Int
+  comments    Comment[]
+  posts       AuthorsOnPost[]
 
   @@map("authors")
 }
