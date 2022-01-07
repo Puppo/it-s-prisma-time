@@ -56,67 +56,43 @@ async function setup(prisma: PrismaClient): Promise<void> {
 }
 
 async function main() {
-  const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  log: [
+    {
+      emit: "event",
+      level: "query",
+    },
+    "info",
+    "warn",
+    "error",
+  ],
+});
+prisma.$on("query", e => {
+  console.log("Query: " + e.query);
+  console.log("Duration: " + e.duration + "ms");
+});
   try {
-    {
-      // transaction array
-      const result = await prisma.$transaction([
-        prisma.author.create({
-          data: {
-            firstName: "Author from transaction",
-            lastName: "Author from transaction",
-            age: getRandomInt(16, 100),
-          },
-        }),
-        prisma.post.create({
-          data: {
-            title: "Post from transaction",
-            content: "Post from transaction",
-            published: false,
-          },
-        }),
-      ]);
-      console.log(result);
-    }
+    await setup(prisma);
 
-    {
-      // transaction array
-      try {
-        const result = await prisma.$transaction(async () => {
-          const authorData = {
-            firstName: "Author from transaction",
-            lastName: "Author from transaction",
-            age: getRandomInt(16, 100),
-          } as const;
-          const author = await prisma.author.create({
-            data: authorData,
-          });
-          const post = await prisma.post.create({
-            data: {
-              title: "Post from transaction",
-              content: "Post from transaction",
-              published: false,
-              authors: {
-                create: [
-                  {
-                    authorId: author.id,
-                  },
-                ],
+    const result = await prisma.post.findMany({
+      where: {
+        published: true,
+      },
+      include: {
+        comments: true,
+        authors: {
+          include: {
+            author: {
+              select: {
+                firstName: true,
+                lastName: true,
               },
             },
-            include: {
-              authors: {
-                include: {
-                  author: true,
-                },
-              },
-            },
-          });
-          return { author, post };
-        });
-        console.log(JSON.stringify(result, null, 2));
-      } catch (error) {}
-    }
+          },
+        },
+      },
+    });
+    console.log(JSON.stringify(result, undefined, 2));
   } catch (error) {
     console.error(error);
     throw error;
