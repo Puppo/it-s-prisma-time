@@ -1,5 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 
+function getRandomInt(min: number, max: number): number {
+  return (
+    Math.floor(Math.random() * (Math.floor(max) - Math.ceil(min) + 1)) +
+    Math.ceil(min)
+  );
+}
+
 async function setup(prisma: PrismaClient): Promise<void> {
   if ((await prisma.post.count()) !== 0) {
     console.log("Database already populated");
@@ -12,6 +19,7 @@ async function setup(prisma: PrismaClient): Promise<void> {
           data: {
             firstName: `First name ${i + 1}`,
             lastName: `Last name ${i + 1}`,
+            age: getRandomInt(16, 100),
           },
         })
     )
@@ -28,9 +36,18 @@ async function setup(prisma: PrismaClient): Promise<void> {
             authors: {
               create: [
                 {
-                  authorId: authors[i].id,
+                  authorId: authors[getRandomInt(1, authors.length) - 1].id,
                 },
               ],
+            },
+            comments: {
+              create: [...Array(getRandomInt(1, 10)).keys()].map(i => ({
+                text: `Comment text ${i + 1}`,
+                authorId:
+                  Math.random() > 0.5
+                    ? authors[getRandomInt(1, authors.length) - 1].id
+                    : undefined,
+              })),
             },
           },
         })
@@ -43,46 +60,45 @@ async function main() {
   try {
     await setup(prisma);
     {
-      // skip, take
-      const pageOnePosts = await prisma.post.findMany({
-        take: 3,
-        orderBy: {
-          id: "asc",
+      // aggregate, avg, max, min
+      const aggregate = await prisma.author.aggregate({
+        _avg: {
+          age: true,
+        },
+        _max: {
+          age: true,
+        },
+        _min: {
+          age: true,
         },
       });
-      console.log(`Page 1: `, JSON.stringify(pageOnePosts, undefined, 2));
-
-      const pageTwoPosts = await prisma.post.findMany({
-        skip: 3,
-        take: 3,
-        orderBy: {
-          id: "asc",
-        },
-      });
-      console.log(`Page 2: `, JSON.stringify(pageTwoPosts, undefined, 2));
+      console.log(`Authors Avg Age: `, aggregate._avg.age);
+      console.log(`Authors Max Age: `, aggregate._max.age);
+      console.log(`Authors Min Age: `, aggregate._min.age);
     }
 
     {
-      // cursor
-      const pageOnePosts = await prisma.post.findMany({
-        take: 3,
-        orderBy: {
-          id: "asc",
-        },
-      });
-      console.log(`Page 1: `, JSON.stringify(pageOnePosts, undefined, 2));
-
-      const pageTwoPosts = await prisma.post.findMany({
-        skip: 1,
-        take: 3,
-        cursor: {
-          id: pageOnePosts[pageOnePosts.length - 1].id,
+      // groupBy
+      const commentsGroupByPost = await prisma.comment.groupBy({
+        by: ["postId"],
+        _count: {
+          authorId: true,
+          _all: true,
         },
         orderBy: {
-          id: "asc",
+          _count: {
+            authorId: "desc",
+          },
         },
       });
-      console.log(`Page 2: `, JSON.stringify(pageTwoPosts, undefined, 2));
+      console.table(
+        commentsGroupByPost.map(
+          ({
+            postId,
+            _count: { authorId: commentsWithAuthor, _all: commentsCount },
+          }) => ({ postId, commentsWithAuthor, commentsCount })
+        )
+      );
     }
   } catch (error) {
     console.error(error);
