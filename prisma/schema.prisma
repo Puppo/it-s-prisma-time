@@ -43,6 +43,7 @@ model Author {
   id        Int @id @default(autoincrement())
   firstName String
   lastName  String
+  age       Int
   comments  Comment[]
   posts     AuthorsOnPost[]
 
