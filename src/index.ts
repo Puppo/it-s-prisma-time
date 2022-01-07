@@ -58,47 +58,64 @@ async function setup(prisma: PrismaClient): Promise<void> {
 async function main() {
   const prisma = new PrismaClient();
   try {
-    await setup(prisma);
     {
-      // aggregate, avg, max, min
-      const aggregate = await prisma.author.aggregate({
-        _avg: {
-          age: true,
-        },
-        _max: {
-          age: true,
-        },
-        _min: {
-          age: true,
-        },
-      });
-      console.log(`Authors Avg Age: `, aggregate._avg.age);
-      console.log(`Authors Max Age: `, aggregate._max.age);
-      console.log(`Authors Min Age: `, aggregate._min.age);
+      // transaction array
+      const result = await prisma.$transaction([
+        prisma.author.create({
+          data: {
+            firstName: "Author from transaction",
+            lastName: "Author from transaction",
+            age: getRandomInt(16, 100),
+          },
+        }),
+        prisma.post.create({
+          data: {
+            title: "Post from transaction",
+            content: "Post from transaction",
+            published: false,
+          },
+        }),
+      ]);
+      console.log(result);
     }
 
     {
-      // groupBy
-      const commentsGroupByPost = await prisma.comment.groupBy({
-        by: ["postId"],
-        _count: {
-          authorId: true,
-          _all: true,
-        },
-        orderBy: {
-          _count: {
-            authorId: "desc",
-          },
-        },
-      });
-      console.table(
-        commentsGroupByPost.map(
-          ({
-            postId,
-            _count: { authorId: commentsWithAuthor, _all: commentsCount },
-          }) => ({ postId, commentsWithAuthor, commentsCount })
-        )
-      );
+      // transaction method
+      try {
+        const result = await prisma.$transaction(async () => {
+          const authorData = {
+            firstName: "Author from transaction",
+            lastName: "Author from transaction",
+            age: getRandomInt(16, 100),
+          } as const;
+          const author = await prisma.author.create({
+            data: authorData,
+          });
+          const post = await prisma.post.create({
+            data: {
+              title: "Post from transaction",
+              content: "Post from transaction",
+              published: false,
+              authors: {
+                create: [
+                  {
+                    authorId: author.id,
+                  },
+                ],
+              },
+            },
+            include: {
+              authors: {
+                include: {
+                  author: true,
+                },
+              },
+            },
+          });
+          return { author, post };
+        });
+        console.log(JSON.stringify(result, null, 2));
+      } catch (error) {}
     }
   } catch (error) {
     console.error(error);
