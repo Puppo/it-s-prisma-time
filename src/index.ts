@@ -40,15 +40,15 @@ async function setup(prisma: PrismaClient): Promise<void> {
                 },
               ],
             },
-            // comments: {
-            //   create: [...Array(getRandomInt(1, 10)).keys()].map(i => ({
-            //     text: `Comment text ${i + 1}`,
-            //     authorId:
-            //       Math.random() > 0.5
-            //         ? authors[getRandomInt(1, authors.length) - 1].id
-            //         : undefined,
-            //   })),
-            // },
+            comments: {
+              create: [...Array(getRandomInt(1, 10)).keys()].map(i => ({
+                text: `Comment text ${i + 1}`,
+                authorId:
+                  Math.random() > 0.5
+                    ? authors[getRandomInt(1, authors.length) - 1].id
+                    : undefined,
+              })),
+            },
           },
         })
     )
