@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Author, Post, Prisma, PrismaClient } from "@prisma/client";
 
 function getRandomInt(min: number, max: number): number {
   return (
@@ -56,31 +56,53 @@ async function setup(prisma: PrismaClient): Promise<void> {
 }
 
 async function main() {
-  const prisma = new PrismaClient({
-    log: ["query", "info", "warn", "error"],
-  });
+  const prisma = new PrismaClient();
   try {
     await setup(prisma);
 
-    const result = await prisma.post.findMany({
-      where: {
-        published: true,
-      },
-      include: {
-        comments: true,
-        authors: {
-          include: {
-            author: {
-              select: {
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-        },
-      },
-    });
-    console.log(JSON.stringify(result, undefined, 2));
+    {
+      const result = await prisma.$executeRaw`
+    INSERT INTO posts (title, content, published, updatedAt)
+    VALUES (${"Post Title"}, ${"Post Content"}, ${false}, ${new Date()});`;
+      console.log(`Insert result: ${result}`);
+    }
+
+    {
+      const result: Post[] = await prisma.$queryRaw<Post[]>`
+SELECT p.id, p.title, p.content, p.published, p.createAt, p.updatedAt
+FROM posts p
+WHERE p.published = ${true}
+ORDER BY p.createAt DESC`;
+      result.forEach(post => {
+        const { id, title, content, createAt, published, updatedAt } = post;
+        console.log({
+          id,
+          title,
+          content,
+          createAt,
+          published,
+          updatedAt,
+        });
+      });
+    }
+
+    {
+      const posts = await prisma.$queryRaw<
+        Post[]
+      >`SELECT * FROM posts WHERE id IN (${Prisma.join([1, 2, 3])})`;
+
+      console.log(`Posts in 1,2,3: ${JSON.stringify(posts, null, 2)}`);
+
+      const author: string | undefined = "transaction";
+      const authors = await prisma.$queryRaw<Author[]>`
+SELECT * FROM authors a ${
+        !!author
+          ? Prisma.sql`WHERE a.firstName || ' ' || a.lastName LIKE ${`%${author}%`}`
+          : Prisma.empty
+      }`;
+
+      console.log(`Authors: ${JSON.stringify(authors, null, 2)}`);
+    }
   } catch (error) {
     console.error(error);
     throw error;
