@@ -8,6 +8,9 @@
   "scripts": {
     "dev": "ts-node ./src/index.ts"
   },
+  "prisma": {
+    "seed": "ts-node prisma/seed"
+  },
   "devDependencies": {
     "@types/node": "^16.11.12",
     "prisma-erd-generator": "^0.6.1",
