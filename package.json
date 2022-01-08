@@ -6,7 +6,12 @@
   "author": "Luca Del Puppo <luca@delpuppo.net>",
   "license": "MIT",
   "scripts": {
-    "dev": "ts-node ./src/index.ts"
+    "dev": "ts-node ./src/index.ts",
+    "init:db": "prisma db seed",
+    "fixture": "ts-node prisma/data-migrations fixture"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/data-migrations seed"
   },
   "devDependencies": {
     "@types/node": "^16.11.12",

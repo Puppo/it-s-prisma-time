@@ -60,3 +60,12 @@ model AuthorsOnPost {
   @@id([authorId, postId])
   @@map("authors_on_post")
 }
+
+model DataMigrations {
+  type      String
+  name      String 
+  runningAt DateTime @default(now())
+
+  @@id([type, name])
+  @@map("data_migrations")
+}
